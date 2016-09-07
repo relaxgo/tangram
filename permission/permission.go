@@ -6,14 +6,14 @@ import (
 	"github.com/labstack/echo"
 )
 
-type Recognizer func(*echo.Context, string, string) bool
+type Recognizer func(echo.Context, ...string) bool
 
 var permissions = make(map[string][]string)
 var recognizers = make(map[string]Recognizer)
 
 var isStrict = false
 
-func Allow(role, method string) {
+func AllowMethod(role, method string) {
 	recognizer := recognizers[role]
 	if recognizer == nil {
 		log.Fatalln("there is no recognizer for ", role)
@@ -33,7 +33,7 @@ func Allow(role, method string) {
 	permissions[method] = append(roles, role)
 }
 
-func IsAllow(c *echo.Context, model, method string) bool {
+func IsAllowMethod(c echo.Context, method string) bool {
 	roles := permissions[method]
 	if roles == nil {
 		return !isStrict
@@ -41,7 +41,7 @@ func IsAllow(c *echo.Context, model, method string) bool {
 
 	for _, role := range roles {
 		recognizer := recognizers[role]
-		if recognizer(c, model, method) {
+		if recognizer(c, method) {
 			return true
 		}
 	}
