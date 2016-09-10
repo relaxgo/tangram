@@ -15,6 +15,11 @@ type HTTPError struct {
 const defaultCode = "UNKOWN_ERROR"
 
 var ErrNotFound = New(http.StatusNotFound, "NOT_FOUND", "未找到该内容")
+var debug = false
+
+func SetDebug(isDebug bool) {
+	debug = isDebug
+}
 
 func New(httpCode int, msgList ...string) error {
 	len := len(msgList)
@@ -39,25 +44,35 @@ func (err *HTTPError) Error() string {
 }
 
 func HandleError(err error, c echo.Context) {
-	code := http.StatusInternalServerError
+	httpCode := http.StatusInternalServerError
 	var httpErr *HTTPError
 	ok := false
 
 	if httpErr, ok = err.(*HTTPError); ok {
-		code = httpErr.HTTPCode
-	} else if err, ok := err.(*echo.HTTPError); ok {
+		httpCode = httpErr.HTTPCode
+	} else if echoErr, ok := err.(*echo.HTTPError); ok {
 		httpErr = &HTTPError{
-			HTTPCode: err.Code,
+			HTTPCode: echoErr.Code,
 			Code:     defaultCode,
-			Message:  err.Message,
+			Message:  echoErr.Message,
+		}
+	} else {
+		msg := ""
+		if debug {
+			msg = err.Error()
+		}
+		httpErr = &HTTPError{
+			HTTPCode: httpCode,
+			Code:     defaultCode,
+			Message:  msg,
 		}
 	}
 
 	if !c.Response().Committed() {
 		if c.Request().Method() == echo.HEAD { // Issue #608
-			c.NoContent(code)
+			c.NoContent(httpCode)
 		} else {
-			c.JSON(code, httpErr)
+			c.JSON(httpCode, httpErr)
 		}
 	}
 }
