@@ -1,23 +1,19 @@
 package errors
 
-import (
-	"net/http"
-	"strings"
-)
+import "strings"
 
-type HTTPError struct {
-	HTTPCode int `json:"-"`
-	Code     string
-	Message  string
+type HTTPError interface {
+	error
+	HTTPStatus() int
+	Code() string
+	Message() string
 }
 
-const defaultCode = "UNKOWN_ERROR"
-
-var ErrNotFound = New(http.StatusNotFound, "NOT_FOUND", "未找到该内容")
-var debug = false
-
-func SetDebug(isDebug bool) {
-	debug = isDebug
+type Error struct {
+	status  int `json:"-"`
+	code    string
+	message string
+	detail  string
 }
 
 func New(httpCode int, msgList ...string) error {
