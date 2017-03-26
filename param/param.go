@@ -1,45 +1,52 @@
 package param
 
 import (
+	"mime/multipart"
+	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
 
-type PostValues interface {
-	PostFormValue(string) string
+type ValueStore interface {
+	Value(string) string
 }
 
-type Values interface {
-	Param(string) string
-	QueryParam(string) string
-	PostValues
+func String(vs ValueStore, key string) string {
+	return vs.Value(key)
 }
 
-func String(vs Values, key string) string {
-	v := vs.Param(key)
-	if v != "" {
-		return v
-	}
-	v = vs.QueryParam(key)
-	if v != "" {
-		return v
-	}
-	v = vs.PostFormValue(key)
-	if v != "" {
-		return v
-	}
-	return ""
-}
-
-func Int(vs Values, key string) int {
+func Int(vs ValueStore, key string) int {
 	v, _ := strconv.Atoi(String(vs, key))
 	return v
 }
 
-func Bool(vs Values, key string) bool {
+func Float64(p ValueStore, key string) float64 {
+	v, _ := strconv.ParseFloat(String(p, key), 64)
+	return v
+}
+
+func Bool(vs ValueStore, key string) bool {
 	v := String(vs, key)
 	return strings.ToLower(v) == "true"
 }
 
-func Object(p PostValues, v interface{}) {
+type FileSize interface {
+	Size() int64
+}
+
+func File(r *http.Request, key string) (file multipart.File, fsize int64) {
+	file, _, err := r.FormFile(key)
+	if err != nil {
+		return nil, 0
+	}
+	switch f := file.(type) {
+	case FileSize:
+		fsize = f.Size()
+	case *os.File:
+		if s, err := f.Stat(); err == nil {
+			fsize = s.Size()
+		}
+	}
+	return
 }
