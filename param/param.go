@@ -1,10 +1,20 @@
 package param
 
 import (
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
+)
+
+const (
+	defaultMaxMemory = 32 << 20 // 32 MB
+)
+
+var (
+	infoLog  = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Llongfile)
+	errorLog = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Llongfile)
 )
 
 type ValueStore interface {
@@ -100,4 +110,19 @@ func File(r *http.Request, key string) (file multipart.File, fsize int64) {
 		}
 	}
 	return
+}
+
+func Files(r *http.Request, key string) []*multipart.FileHeader {
+	if r.MultipartForm == nil {
+		err := r.ParseMultipartForm(defaultMaxMemory)
+		if err != nil {
+			errorLog.Println(err)
+			return nil
+		}
+	}
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		return r.MultipartForm.File[key]
+	}
+	infoLog.Println("MultipartForm nil")
+	return nil
 }
