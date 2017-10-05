@@ -1,6 +1,9 @@
 package errs
 
-import "testing"
+import (
+	"encoding/json"
+	"testing"
+)
 
 func TestNew(t *testing.T) {
 	err := New(200)
@@ -39,5 +42,15 @@ func Assert(t *testing.T, err HTTPError, status int, code, msg string) {
 	}
 	if err.Message() != msg {
 		t.Error("err is not correct", err)
+	}
+}
+
+func TestJSON(t *testing.T) {
+	err := New(404, "NOT_FOUND", "the resource is not found")
+	v, e := json.Marshal(err)
+	if e != nil {
+		t.Error(e)
+	} else {
+		t.Log(string(v))
 	}
 }

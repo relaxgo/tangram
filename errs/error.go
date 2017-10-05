@@ -52,7 +52,7 @@ func (err Error) AppendMessage(msg string) Error {
 }
 
 func (err Error) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("{\"code\":%v,\"message\":%v}", err.code, err.message)), nil
+	return []byte(fmt.Sprintf("{\"code\": \"%v\",\"message\": \"%v\"}", err.code, err.message)), nil
 }
 
 func (err Error) String() string {
