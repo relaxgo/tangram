@@ -36,6 +36,13 @@ func New(httpCode int, msgList ...string) Error {
 	return Error{httpCode, code, msg}
 }
 
+func Wrap(err error) Error {
+	if e, ok := err.(Error); ok {
+		return e
+	}
+	return New(500, "UNKNOWN_ERROR", err.Error())
+}
+
 func (err Error) Error() string   { return err.message }
 func (err Error) HTTPStatus() int { return err.status }
 func (err Error) Code() string    { return err.code }

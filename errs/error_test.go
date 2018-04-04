@@ -2,6 +2,7 @@ package errs
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 )
 
@@ -53,4 +54,10 @@ func TestJSON(t *testing.T) {
 	} else {
 		t.Log(string(v))
 	}
+}
+
+func TestWrap(t *testing.T) {
+	err := New(404, "NOT_FOUND", "the resource is not found")
+	t.Log(Wrap(err).HTTPStatus())
+	t.Log(Wrap(errors.New("test")).HTTPStatus())
 }
