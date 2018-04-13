@@ -61,3 +61,15 @@ func TestWrap(t *testing.T) {
 	t.Log(Wrap(err).HTTPStatus())
 	t.Log(Wrap(errors.New("test")).HTTPStatus())
 }
+
+type IncludedErr struct {
+	Error
+	Data string `json:data`
+}
+
+func TestIncluded(t *testing.T) {
+	// FIXME data is not in json
+	iErr := IncludedErr{Error: New(404, "NOT_FOUND", "not found"), Data: "test"}
+	v, err := json.Marshal(iErr)
+	t.Log(string(v), err)
+}

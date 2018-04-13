@@ -11,15 +11,33 @@ import (
 	"github.com/buger/jsonparser"
 )
 
+type HookFunc func(*http.Request, string) string
 type valueStore struct {
 	*http.Request
+	hook HookFunc
 }
 
-func NewValueStore(r *http.Request) ValueStore {
-	return &valueStore{r}
+func NewValueStore(r *http.Request, hook HookFunc) ValueStore {
+	return &valueStore{r, hook}
 }
 
 func (r *valueStore) Value(key string) string {
+	v := ""
+	if r.hook != nil {
+		if v = r.hook(r.Request, key); v != "" {
+			return v
+		}
+	}
+	if v = r.ValueFromBody(key); v != "" {
+		return v
+	}
+	if v = r.URL.Query().Get(key); v != "" {
+		return v
+	}
+	return v
+}
+
+func (r *valueStore) ValueFromBody(key string) string {
 	contentType := GetContentType(r.Request)
 	if contentType == "application/json" {
 		defer r.Body.Close()
@@ -46,9 +64,6 @@ func (r *valueStore) Value(key string) string {
 		}
 	}
 	if v := r.FormValue(key); v != "" {
-		return v
-	}
-	if v := r.URL.Query().Get(key); v != "" {
 		return v
 	}
 	return ""

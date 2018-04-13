@@ -49,13 +49,19 @@ func (err Error) Code() string    { return err.code }
 func (err Error) Message() string { return err.message }
 
 func (err Error) WithMessage(msg string) Error {
-	err.message = msg
-	return err
+	return Error{
+		status:  err.status,
+		code:    err.code,
+		message: msg,
+	}
 }
 
 func (err Error) AppendMessage(msg string) Error {
-	err.message = err.message + ". " + msg
-	return err
+	return Error{
+		status:  err.status,
+		code:    err.code,
+		message: err.message + ". " + msg,
+	}
 }
 
 func (err Error) MarshalJSON() ([]byte, error) {
