@@ -11,6 +11,16 @@ import (
 	"github.com/buger/jsonparser"
 )
 
+var debug = debugT(false)
+
+type debugT bool
+
+func (d debugT) Println(args ...interface{}) {
+	if d {
+		log.Println(args...)
+	}
+}
+
 type HookFunc func(*http.Request, string) string
 type valueStore struct {
 	*http.Request
@@ -43,20 +53,20 @@ func (r *valueStore) ValueFromBody(key string) string {
 		defer r.Body.Close()
 		r1, r2, err := drainBody(r.Body)
 		if err != nil {
-			log.Print("read failed", err)
+			debug.Println("read failed", err)
 			return ""
 		}
 		r.Body = r2
 		body, err := ioutil.ReadAll(r1)
 		// TODO add new body reader ?
 		if err != nil {
-			log.Print("read body", err)
+			debug.Println("read body", err)
 			return ""
 		}
 		value, _, _, err := jsonparser.Get(body, key)
 
 		if err != nil {
-			log.Println("jsonparser", err)
+			debug.Println("key:", key, "jsonparser", err)
 			return ""
 		}
 		if len(value) > 0 {
